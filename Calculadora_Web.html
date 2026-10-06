@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora Web</title>
+    <!-- Tailwind CSS para diseño rápido y limpio -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tipografía retro estilo terminal -->
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #0c120c;
+            font-family: 'Share Tech Mono', monospace;
+            color: #22c55e;
+        }
+
+        /* Pantalla estilo monitor retro */
+        .retro-screen {
+            background-color: #050805;
+            border: 3px solid #166534;
+            box-shadow: inset 0 0 10px rgba(34, 197, 94, 0.15);
+        }
+
+        /* Botones con relieve clásico retro */
+        .retro-key {
+            background: linear-gradient(to bottom, #1e293b, #0f172a);
+            color: #22c55e;
+            border: 2px solid #22c55e;
+            font-size: 1.25rem;
+            font-weight: bold;
+            transition: all 0.05s ease;
+        }
+        .retro-key:active {
+            border-style: inset;
+            background: #0f172a;
+            transform: translateY(1px);
+        }
+
+        .retro-key-action {
+            background: linear-gradient(to bottom, #450a0a, #270606);
+            color: #f87171;
+            border: 2px solid #f87171;
+        }
+
+        .retro-key-eq {
+            background: linear-gradient(to bottom, #14532d, #052e16);
+            color: #4ade80;
+            border: 2px solid #4ade80;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- Contenedor Principal -->
+    <div class="w-full max-w-2xl bg-black border-2 border-green-800 rounded-lg p-5 shadow-2xl flex flex-col md:flex-row gap-6">
+        
+        <!-- Sección Calculadora -->
+        <div class="flex-1 flex flex-col">
+            <h1 class="text-xl font-bold tracking-widest text-green-500 mb-3 uppercase">&gt; C4LCUL4D0R4_W3B</h1>
+            
+            <!-- Pantalla -->
+            <div class="retro-screen p-3 rounded mb-4 text-right">
+                <div id="subDisplay" class="text-xs text-green-700 h-5 overflow-hidden"></div>
+                <div id="mainDisplay" class="text-3xl text-green-400 tracking-wider overflow-x-auto">0</div>
+            </div>
+
+            <!-- Teclado -->
+            <div class="grid grid-cols-4 gap-2">
+                <button class="retro-key retro-key-action p-3 rounded" onclick="clearCalculator()">C</button>
+                <button class="retro-key retro-key-action p-3 rounded" onclick="backspaceCalculator()">DEL</button>
+                <button class="retro-key p-3 rounded" onclick="appendOperator('/')">&divide;</button>
+                <button class="retro-key p-3 rounded" onclick="appendOperator('*')">&times;</button>
+
+                <button class="retro-key p-3 rounded" onclick="appendNumber('7')">7</button>
+                <button class="retro-key p-3 rounded" onclick="appendNumber('8')">8</button>
+                <button class="retro-key p-3 rounded" onclick="appendNumber('9')">9</button>
+                <button class="retro-key p-3 rounded" onclick="appendOperator('-')">&minus;</button>
+
+                <button class="retro-key p-3 rounded" onclick="appendNumber('4')">4</button>
+                <button class="retro-key p-3 rounded" onclick="appendNumber('5')">5</button>
+                <button class="retro-key p-3 rounded" onclick="appendNumber('6')">6</button>
+                <button class="retro-key p-3 rounded" onclick="appendOperator('+')">+</button>
+
+                <button class="retro-key p-3 rounded" onclick="appendNumber('1')">1</button>
+                <button class="retro-key p-3 rounded" onclick="appendNumber('2')">2</button>
+                <button class="retro-key p-3 rounded" onclick="appendNumber('3')">3</button>
+                <button class="retro-key retro-key-eq p-3 rounded row-span-2 flex items-center justify-center" onclick="calculateResult()">=</button>
+
+                <button class="retro-key p-3 rounded col-span-2" onclick="appendNumber('0')">0</button>
+                <button class="retro-key p-3 rounded" onclick="appendDot()">.</button>
+            </div>
+        </div>
+
+        <!-- Sección Historial -->
+        <div class="w-full md:w-64 flex flex-col border-t md:border-t-0 md:border-l border-green-900 pt-4 md:pt-0 md:pl-4">
+            <div class="flex justify-between items-center mb-3">
+                <span class="text-sm tracking-wider text-green-500 font-bold">&gt; HISTORIAL</span>
+                <button onclick="clearHistory()" class="text-xs text-red-400 bg-red-950 border border-red-800 px-2 py-1 rounded hover:bg-red-900 transition">
+                    [BORRAR]
+                </button>
+            </div>
+
+            <!-- Lista de Historial -->
+            <div id="historyList" class="retro-screen flex-1 h-48 md:h-64 overflow-y-auto p-2 rounded space-y-1 text-sm">
+                <!-- Se llena mediante JavaScript ES5 -->
+            </div>
+        </div>
+
+    </div>
+
+    
+
+    <!-- Lógica en JavaScript ES5 estricto -->
+    <script>
+        var currentInput = "0";
+        var previousInput = "";
+        var operation = null;
+        var resetScreen = false;
+
+        var mainDisplay = document.getElementById("mainDisplay");
+        var subDisplay = document.getElementById("subDisplay");
+        var historyList = document.getElementById("historyList");
+
+        window.onload = function() {
+            loadHistory();
+            updateDisplay();
+        };
+
+        function updateDisplay() {
+            mainDisplay.innerText = currentInput;
+            if (operation !== null) {
+                subDisplay.innerText = previousInput + " " + operation;
+            } else {
+                subDisplay.innerText = "";
+            }
+        }
+
+        function appendNumber(num) {
+            if (currentInput === "0" || resetScreen) {
+                currentInput = num;
+                resetScreen = false;
+            } else {
+                if (currentInput.length < 12) {
+                    currentInput += num;
+                }
+            }
+            updateDisplay();
+        }
+
+        function appendDot() {
+            if (resetScreen) {
+                currentInput = "0.";
+                resetScreen = false;
+                updateDisplay();
+                return;
+            }
+            if (currentInput.indexOf(".") === -1) {
+                currentInput += ".";
+                updateDisplay();
+            }
+        }
+
+        function appendOperator(op) {
+            if (operation !== null && !resetScreen) {
+                calculateResult();
+            }
+            previousInput = currentInput;
+            operation = op;
+            resetScreen = true;
+            updateDisplay();
+        }
+
+        function clearCalculator() {
+            currentInput = "0";
+            previousInput = "";
+            operation = null;
+            resetScreen = false;
+            updateDisplay();
+        }
+
+        function backspaceCalculator() {
+            if (resetScreen) return;
+            if (currentInput.length > 1) {
+                currentInput = currentInput.substring(0, currentInput.length - 1);
+            } else {
+                currentInput = "0";
+            }
+            updateDisplay();
+        }
+
+        function calculateResult() {
+            if (operation === null || resetScreen) return;
+
+            var prev = parseFloat(previousInput);
+            var curr = parseFloat(currentInput);
+            var result = 0;
+            var expression = previousInput + " " + operation + " " + currentInput;
+
+            if (isNaN(prev) || isNaN(curr)) return;
+
+            switch (operation) {
+                case '+':
+                    result = prev + curr;
+                    break;
+                case '-':
+                    result = prev - curr;
+                    break;
+                case '*':
+                    result = prev * curr;
+                    break;
+                case '/':
+                    if (curr === 0) {
+                        currentInput = "ERR: DIV/0";
+                        operation = null;
+                        resetScreen = true;
+                        updateDisplay();
+                        setTimeout(clearCalculator, 1500);
+                        return;
+                    }
+                    result = prev / curr;
+                    break;
+                default:
+                    return;
+            }
+
+            // Redondear para evitar decimales largos en JS
+            result = Math.round(result * 1000000) / 1000000;
+            var record = expression + " = " + result;
+
+            saveHistory(record);
+
+            currentInput = String(result);
+            operation = null;
+            previousInput = "";
+            resetScreen = true;
+            updateDisplay();
+        }
+
+        function saveHistory(recordText) {
+            var history = [];
+            var stored = localStorage.getItem("simple_retro_calc_history");
+            
+            if (stored !== null) {
+                try {
+                    history = JSON.parse(stored);
+                    if (!Array.isArray(history)) history = [];
+                } catch (e) {
+                    history = [];
+                }
+            }
+
+            history.unshift(recordText); // Agregar al principio
+
+            try {
+                localStorage.setItem("simple_retro_calc_history", JSON.stringify(history));
+            } catch (e) {
+                console.error("Error guardando en localStorage", e);
+            }
+
+            renderHistory(history);
+        }
+
+        function loadHistory() {
+            var stored = localStorage.getItem("simple_retro_calc_history");
+            var history = [];
+            if (stored !== null) {
+                try {
+                    history = JSON.parse(stored);
+                    if (!Array.isArray(history)) history = [];
+                } catch (e) {
+                    history = [];
+                }
+            }
+            renderHistory(history);
+        }
+
+        function renderHistory(history) {
+            historyList.innerHTML = "";
+            if (history.length === 0) {
+                var empty = document.createElement("div");
+                empty.className = "text-green-800 text-center italic py-6";
+                empty.innerText = "Sin registros";
+                historyList.appendChild(empty);
+                return;
+            }
+
+            for (var i = 0; i < history.length; i++) {
+                var item = document.createElement("div");
+                item.className = "border-b border-green-900/40 py-1 text-green-400 font-mono text-xs";
+                item.innerText = "> " + history[i];
+                historyList.appendChild(item);
+            }
+        }
+
+        function clearHistory() {
+            try {
+                localStorage.removeItem("simple_retro_calc_history");
+            } catch (e) {
+                console.error("Error limpiando localStorage", e);
+            }
+            loadHistory();
+        }
+    </script>
+</body>
+</html>
